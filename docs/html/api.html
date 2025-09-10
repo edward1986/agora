@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Agora | Api</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/highlight.css">
+</head>
+
+<body class="grey lighten-4">
+
+    <div class="container">
+        <div class="card-panel">
+            <h3 id="api-documentation">API Documentation</h3>
+<pre><code class="lang-javascript">var SmallTalk = require(&#39;agora&#39;);
+</code></pre>
+<h4 id="var-server-new-agora-server-opts-">var server = new SmallTalk.Server(opts)</h4>
+<p>returns a new instance of a <code>SmallTalk.Server</code>.</p>
+<h5 id="-opts-port-"><code>opts.port</code></h5>
+<p>specify the port number <code>int</code></p>
+<h4 id="server-class">Server Class</h4>
+<h5 id="server-emitio">Server.emitIO</h5>
+<p>reference to the underlying <code>emit.io</code> instance.</p>
+<h5 id="server-wsserver">Server.wsServer</h5>
+<p>reference to the underlying <code>ws.Server</code> instance.</p>
+<h5 id="server-instreams">Server.inStreams</h5>
+<p>a <code>hash</code> of client agora inStreams.</p>
+<h5 id="server-outstreams">Server.outStreams</h5>
+<p>a <code>hash</code> of client agora outStreams.</p>
+<h5 id="event-connection-">Event <code>&#39;connection&#39;</code></h5>
+<pre><code class="lang-javascript">server.on(&#39;connection&#39;, function (connection) {
+    // do stuff with the connection
+});
+</code></pre>
+<h6 id="whenever-a-new-client-websocket-connection-is-made-to-the-server-a-connection-event-is-fired-">Whenever a new client websocket connection is made to the server, a <code>connection</code> event is fired.</h6>
+<p>The handler is called with a <code>connection</code> object, which consists of the following:</p>
+<h5 id="connection-id">connection.id</h5>
+<p>A random <code>string</code></p>
+<h5 id="connection-instream">connection.inStream</h5>
+<p><code>EventEmitter</code> on which you can listen to events coming down through the clients&#39; websocket stream.</p>
+<pre><code class="lang-javascript">var inStream = connection.inStream
+
+inStream.on(&#39;someClientEvent&#39;, function (data) {
+    // do something with client data here!
+})
+</code></pre>
+<h5 id="connection-outstream">connection.outStream</h5>
+<p><code>EventEmitter</code> on which you can emit to, and send events and data back to a client websocket stream.</p>
+<pre><code class="lang-javascript">server.emitTo(inStream, &#39;someEvent&#39;, {&#39;some&#39;: &#39;data&#39;});
+</code></pre>
+<h5 id="connection-parser">connection.parser</h5>
+<p>reference to the underlying <code>JSONStream</code> parsing stream.</p>
+<h5 id="connection-stringify">connection.stringify</h5>
+<p>reference to the underlying <code>JSONStream</code> stringifying stream.</p>
+<h4 id="var-client-new-agora-client-">var client = new SmallTalk.Client()</h4>
+<p>returns a new instance of a <code>SmallTalk.Client</code>.</p>
+<h4 id="client-class">Client Class</h4>
+<h5 id="client-emitio">Client.emitIO</h5>
+<p>reference to the underlying <code>emit.io</code> instance.</p>
+<h5 id="client-wstream">Client.wstream</h5>
+<p>reference to the underlying <code>websocket-stream</code> instance. Only available after calling <code>client.connect()</code></p>
+<h5 id="client-instream">Client.inStream</h5>
+<p><code>EventEmitter</code> through which JSON-parsed events can be listened to coming down through the websocket stream.</p>
+<pre><code class="lang-javascript">client.on(&#39;someServerEvent&#39;, function (data) {
+    // do something with `data` from the server
+});
+</code></pre>
+<h5 id="client-outstream">Client.outStream</h5>
+<p><code>EventEmitter</code> to which you can emit events back down to the server. Emitted data will be piped into the websocket stream.</p>
+<pre><code class="lang-javascript">client.emit(&#39;someData&#39;, {foo: &#39;bar&#39;});
+</code></pre>
+<h3 id="license">license</h3>
+<p>MIT</p>
+
+        </div>
+    </div>
+
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.5/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</body>
+
+</html>

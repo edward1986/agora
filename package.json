@@ -1,0 +1,24 @@
+{
+  "name": "agora",
+  "version": "0.0.2",
+  "description": "simple websocket communication module",
+  "main": "index.js",
+  "scripts": {
+    "test": "tap test",
+    "build-docs": "node docs/bin/build.js"
+  },
+  "author": "Alexander Vados <alex.vados@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "JSONStream": "^0.10.0",
+    "emit.io": "^0.2.3",
+    "hat": "0.0.3",
+    "websocket-stream": "^1.5.0",
+    "ws": "^0.7.1"
+  },
+  "devDependencies": {
+    "capitalize": "^0.5.0",
+    "tap": "^1.0.1",
+    "tape": "^4.0.0"
+  }
+}

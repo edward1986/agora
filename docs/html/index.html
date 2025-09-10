@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Agora | Index</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/highlight.css">
+</head>
+
+<body class="grey lighten-4">
+
+    <div class="container">
+        <div class="card-panel">
+            <h2 id="agora-build-status-https-magnum-travis-ci-com-alexander-daniel-agora-svg-token-5gnfxjg7qejwrzj1hszo-branch-master-https-magnum-travis-ci-com-alexander-daniel-agora-">SmallTalk <a href="https://magnum.travis-ci.com/alexander-daniel/agora"><img src="https://magnum.travis-ci.com/alexander-daniel/agora.svg?token=5GnFxJg7qeJWRzj1HsZo&amp;branch=master" alt="Build Status"></a></h2>
+<p>Dead simple websocket communication module.</p>
+<p>Stream JSON data easily with events between clients and server. You can broadcast to all clients, or just one.</p>
+<p>Runs in node and in the browser with browserify!</p>
+<p>It&#39;s basically a simple wrapper built around the awesome module <a href="https://github.com/bpostlethwaite/emit.io">emit.io</a>.</p>
+<h3 id="documentation">Documentation</h3>
+<ul>
+<li><h6 id="-getting-started-getting-started-html-"><a href="getting-started.html">Getting Started</a></h6>
+</li>
+<li><h6 id="-browser-time-browser-time-html-"><a href="browser-time.html">Browser-Time</a></h6>
+</li>
+</ul>
+<h5 id="-api-docs-api-html-"><a href="api.html">API Docs</a></h5>
+<h3 id="install">Install</h3>
+<pre><code class="lang-bash">npm install agora
+</code></pre>
+<h4 id="server-example">Server example</h4>
+<pre><code class="lang-javascript">var Server = require(&#39;agora&#39;).Server;
+
+var server = new Server({
+    port: 8000
+});
+
+server.on(&#39;connection&#39;, function (conn) {
+
+    var id = conn.id;
+
+    /* returned inStream is an emitter */
+    var inStream = conn.inStream;
+
+    /* you can emit to the outStream and data will
+     * be piped off to the client */
+    var outStream = conn.outStream;
+
+    /*
+     * listen on a per client basis
+     * in this case, we listen for the &#39;addOne&#39; event from the client,
+     * and we can wrangle it, then send it back with an &#39;addResult&#39; event
+     */
+    inStream.on(&#39;addOne&#39;, function (data) {
+        server.emitTo(outStream, &#39;addResult&#39;, data += 1);
+    });
+
+    /* emit to one client */
+    server.emitTo(outStream, &#39;ready&#39;, id);
+});
+
+/* or emit to everyone! */
+setInterval(function () {
+    server.emit(&#39;serverTime&#39;, new Date());
+}, 1000);
+</code></pre>
+<h4 id="client-example">Client example</h4>
+<pre><code class="lang-javascript">var Client = require(&#39;agora&#39;).Client;
+var client = new Client();
+
+/*
+ * once we get the ready event from the server,
+ * we&#39;re good to go! we can now start emitting
+ * and the server will hear the events!
+ */
+client.on(&#39;ready&#39;, function (id) {
+    client.id = id;
+    client.emit(&#39;addOne&#39;, 1);
+});
+
+/*
+ * once you&#39;ve built your server API, you can
+ * listen to events. Here we&#39;ve set up
+ * an addResult event.
+ */
+client.on(&#39;addResult&#39;, function (data) {
+    var div = document.getElementById(&#39;#someDiv&#39;);
+    div.innerHTML = data;
+
+    setTimeout(function () {
+        client.emit(&#39;addOne&#39;, data);
+    }, 5000);
+});
+
+client.on(&#39;serverTime&#39;, function (date) {
+    console.log(date);
+});
+
+/* connect the client! */
+client.connect(&#39;ws://localhost:8000&#39;);
+</code></pre>
+
+        </div>
+    </div>
+
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.5/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</body>
+
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Agora | Browser Time</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/highlight.css">
+</head>
+
+<body class="grey lighten-4">
+
+    <div class="container">
+        <div class="card-panel">
+            <h2 id="browser-time">Browser Time</h2>
+<p>Alright! So we&#39;ve managed to run everything in the terminal up to now. The great thing about many node.js modules is that they can also run in browser-land with a neat tool called <a href="http://browserify.com">browserify</a>. agora is no different! All of the streaming-evented goodness is easy to use in the browser as well!</p>
+<p>At the end of this exercise, we&#39;ll have a webpage that accepts input from the user, and returns something useful that the client can add to the DOM!</p>
+<p>Without further ado, let&#39;s start buildin&#39;!</p>
+<h2 id="server-setup">Server setup</h2>
+<p>Alright, so this time around, we&#39;re going to also need a staticServer, to handle requests for static content like .html pages, .css stylesheets, images, etc.</p>
+<p>I personally love <a href="https://www.npmjs.com/package/ecstatic">ecstatic</a>. It&#39;s simple, and easy-to-use.</p>
+<p>Let&#39;s add <code>ecstatic</code> as a dependency to our project. Do a:</p>
+<pre><code class="lang-bash">npm install --save ecstatic
+</code></pre>
+<p>Great! Now we can start writing our server script.</p>
+<pre><code class="lang-javascript">var http = require(&#39;http&#39;);
+var ecstatic = require(&#39;ecstatic&#39;);
+
+var staticOptions = { root: __dirname + &#39;/static&#39; };
+var staticServer = http.createServer(ecstatic(staticOptions));
+
+staticServer.listen(8080, function () {
+    console.log(&#39;static server listening on :8080&#39;);
+});
+</code></pre>
+<p>And that&#39;ll do it for our static-server! Let&#39;s go through this so we can see what&#39;s happening.
+We require in <code>http</code> and <code>ecstatic</code>, set our <code>/static</code> directory as the one to serve to the public, and then create a new <code>http</code> Server.</p>
+<p>Now we can listen on any port, except the one that the websocket server will listen on. Let&#39;s go with <code>8080</code>.</p>
+<p>Now, let&#39;s move on and start building out the Agora server.</p>
+<pre><code class="lang-javascript">var Server = require(&#39;../../index&#39;).Server;
+var server = new Server({
+    port: 8000
+});
+
+server.on(&#39;connection&#39;, function registerListeners (conn) {
+    var id = conn.id;
+
+    /* returned inStream is an emitter */
+    var inStream = conn.inStream;
+
+    /* you can emit to the outStream and data will be piped off to the client */
+    var outStream = conn.outStream;
+
+    /*
+     * listen on a per client basis
+     * in this case, we listen for the &#39;addOne&#39; event from the client,
+     * and we can wrangle it, then send it back with an &#39;addResult&#39; event
+     */
+    inStream.on(&#39;addOne&#39;, function (data) {
+        server.emitTo(outStream, &#39;addResult&#39;, data += 1);
+    });
+
+    /* emit to one client */
+    server.emitTo(outStream, &#39;ready&#39;, id);
+});
+
+setInterval(function () {
+    server.emit(&#39;serverTime&#39;, new Date());
+}, 1000);
+</code></pre>
+<p>We&#39;re pretty much doing the same thing as the first exercise, except we&#39;ve added a &#39;serverTime&#39; event. The agora server will just emit the &#39;serverTime&#39; event to all clients with the current server time! We&#39;ll pick that up on the client-side.</p>
+<h2 id="client-setup">Client Setup</h2>
+<h4 id="client-js">client.js</h4>
+<pre><code class="lang-javascript">var Client = require(&#39;../../index&#39;).Client;
+var client = new Client();
+
+var serverTimeDiv = document.createElement(&#39;div&#39;);
+var dataDiv = document.createElement(&#39;div&#39;);
+document.body.appendChild(serverTimeDiv);
+document.body.appendChild(dataDiv);
+
+client.on(&#39;ready&#39;, function () {
+    dataDiv.innerHTML = &#39;got ready from the server!&#39;;
+    client.emit(&#39;addOne&#39;, 1);
+});
+
+
+client.on(&#39;addResult&#39;, function (data) {
+    dataDiv.innerHTML = &#39;got &quot;addResult&quot; event from server : &#39; + data;
+
+    setTimeout(function () {
+        client.emit(&#39;addOne&#39;, data);
+    }, 5000);
+});
+
+client.on(&#39;serverTime&#39;, function (date) {
+    serverTimeDiv.innerHTML = &#39;server time: &#39; + date;
+});
+
+client.connect(&#39;ws://localhost:8000&#39;);
+</code></pre>
+<p>Alright, so here we&#39;re initializing our agora client the same way as before, but we&#39;re going to create a few DOM elements (divs and the like), so we have a place to put our data! You can obviously extend this to use any of React, Ampersand etc.</p>
+<p>So here we have one div that we can put our &#39;serverTime&#39; in, and one for our &#39;addResult&#39; data.</p>
+<p>That&#39;s it! Once the connection is made, all of the events will be fired automatically.</p>
+<p><strong>Note: DO NOT actually use <code>innerHTML</code>. I&#39;m just using it here for brevity.</strong></p>
+<h4 id="static-index-html">static/index.html</h4>
+<pre><code class="lang-html">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Agora | Browser-Time&lt;/title&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+    &lt;script src=&quot;bundle.js&quot;&gt;&lt;/script&gt;
+&lt;/body&gt;
+
+
+&lt;/html&gt;
+</code></pre>
+<p>Awesome. The astute ones among you will wonder what the <code>bundle.js</code> is doing there. We&#39;ve only got <code>client.js</code> and <code>server.js</code>! No problem, this is where <a href="http://browserify.com">browserify</a> hops into the arena and does its magic.</p>
+<p>First, let&#39;s install it:</p>
+<pre><code class="lang-bash">npm install browserify
+</code></pre>
+<p>Like usual, that will install browserify into your node_modules folder, keeping it isolated.
+While the isolation is desired, you&#39;ll notice that if you try to run <code>browserify</code> from your command-line, it won&#39;t work. To keep things really node-y, we&#39;re going to whip up a quick npm run script to handle the &#39;Browserifying&#39;.</p>
+<p>To do so, open up your <code>package.json</code> once again, and modify the <code>scripts</code> portion so it looks like the following:</p>
+<pre><code class="lang-json">&quot;scripts&quot;: {
+    &quot;test&quot;: &quot;echo \&quot;Error: no test specified\&quot; &amp;&amp; exit 1&quot;,
+    &quot;build-js&quot;: &quot;browserify client.js &gt; static/bundle.js -v&quot;
+}
+</code></pre>
+<p>So to run that command, all you have to do is:</p>
+<pre><code class="lang-bash">npm run build-js
+</code></pre>
+<p>What does it do? It takes your <code>client.js</code> src and pipes it through Browserify, outputting a browser-ready bundle which we pipe into <code>static/bundle.js</code>. Easy right? Now we&#39;ve got our <code>bundle.js</code> that is being used by our <code>index.html</code>. We&#39;re ready to cheggitout!</p>
+<h2 id="let-s-do-this-">Let&#39;s do this!</h2>
+<p>From your terminal, fire up the server:</p>
+<pre><code class="lang-bash">node server.js
+</code></pre>
+<p>Now head to your browser and visit <code>http://localhost:8080</code>.</p>
+<p>The static server will serve up the HTML files and any other static assets (we only have the HTML file). Once the client has received <code>bundle.js</code>, it will run it, and all the magic will happen in your browser!</p>
+<p>Next guide will probably be integrating with some framework like Ampersand or React!</p>
+
+        </div>
+    </div>
+
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.5/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</body>
+
+</html>

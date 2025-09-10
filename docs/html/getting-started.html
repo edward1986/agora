@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Agora | Getting Started</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/highlight.css">
+</head>
+
+<body class="grey lighten-4">
+
+    <div class="container">
+        <div class="card-panel">
+            <h2 id="getting-started">Getting Started</h2>
+<p>The purpose of this getting-started guide is to demonstrate how to set-up two way messaging between one server and several clients. What data you choose to send back and forth is up to you! This guide assumes you&#39;ve got some basic JavaScript and node.js chops. Nothing advanced, but you&#39;ve gotta know what a callback is.</p>
+<h2 id="introduction">Introduction</h2>
+<p>Socket.io is really cool. My only issue with it is that there is a lot of magic going on under the hood. When I was starting out about a year ago, I was able to build some awesome little prototypes with Socket.io super quickly. I appreciated that. However, as I continued learning, I wanted something a bit more modular, something I truly understood. agora is an attempt at creating a simple framework to quickly build real-time apps.</p>
+<h2 id="setting-up-your-environment">Setting up your Environment</h2>
+<p>You&#39;ll first need to make sure that <a href="https://nodejs.org/">node</a> is installed!</p>
+<p>All done, great! Let&#39;s create a project folder. I&#39;ll create mine in my home directory like so:</p>
+<pre><code class="lang-bash">cd ~/ &amp;&amp; mkdir websocket-app
+</code></pre>
+<p>Great! All I&#39;ve done there is move to my home directory (<code>cd ~/</code>), and created a folder (<code>mkdir {desiredFolderName}</code>).</p>
+<p>Now, move into that directory:</p>
+<pre><code class="lang-bash">cd websocket-app
+</code></pre>
+<p>Great! We&#39;re ready to start creating our app.</p>
+<h2 id="setting-up-your-package-json-">Setting up your <code>package.json</code></h2>
+<p>The <code>package.json</code> file we&#39;ll be creating is a nice manifest that describes our App. We don&#39;t need to do much here for now except to create one. To do that, run the following:</p>
+<pre><code class="lang-bash">npm init
+</code></pre>
+<p>That will run a CLI tool for creating a new module. You don&#39;t really need to provide any values yet!</p>
+<p>Done with <code>npm init</code>? Great!</p>
+<p>List the files in your project directory to see that <code>package.json</code> was generated:</p>
+<pre><code class="lang-bash">ls -la
+</code></pre>
+<p>For our project, we&#39;ll have one module we want to use a dependency, agora! Let&#39;s install that in our project now.</p>
+<p>To do so, do the following:</p>
+<pre><code class="lang-bash">npm install agora --save
+</code></pre>
+<p>This will download and install the <code>agora</code> module to a newly-created folder called <code>node_modules</code>. This only installs the module locally in your project, so you can rest easy knowing that you&#39;re not installing some random version accross your system. The <code>--save</code> flag we&#39;ve provided to the install command saves the <code>agora</code> module and version number in your <code>package.json</code>, so that you include the dependency in your app&#39;s manifest!</p>
+<p>Don&#39;t believe me? Run the following:</p>
+<pre><code class="lang-bash">cat package.json
+</code></pre>
+<h2 id="creating-the-server">Creating the server</h2>
+<p>Let&#39;s create a file called <code>server.js</code> in our project directory, and start building it!</p>
+<p>We&#39;ll start by require&#39;ing the Server constructor and creating a instance of our agora server.</p>
+<pre><code class="lang-javascript">var Server = require(&#39;agora&#39;).Server;
+var server = new Server({
+    port: 8000
+});
+</code></pre>
+<p>All we&#39;ve done here is required the Server module from our <code>node_modules</code> folder, and instantiated an instance of a agora server, which will listen on port <code>8080</code>.</p>
+<p>Next, we&#39;re going to set up the function that will fire each time a &#39;connection&#39; event is fired. (When a new client connects in the browser):</p>
+<pre><code class="lang-javascript">server.on(&#39;connection&#39;, function (connection) {
+    console.log(&#39;got connection!&#39;);
+    // Do things with &#39;websocket&#39; here.
+});
+</code></pre>
+<p>So we haven&#39;t yet done anything with the incoming connections except log that we&#39;ve gotten one. That&#39;s fine for now, as I want to illustrate everything step-by-step. Let&#39;s move onto setting up our Client and we&#39;ll come back to this later.</p>
+<h2 id="creating-the-client">Creating the client</h2>
+<p>Let&#39;s create a file called <code>client.js</code> in our project directory. We&#39;ll be doing more or less the same thing as the Server, expect we&#39;ll use the Client Constructor instead of the Server.</p>
+<pre><code class="lang-javascript">var Client = require(&#39;agora&#39;).Client;
+var client = new Client();
+
+client.connect(&#39;ws://localhost:8000&#39;);
+</code></pre>
+<p>Our instance of Client has a <code>connect()</code> method, which takes one argument, the websocket address of the server you want to connect to. In our case, we&#39;ve set up the server to listen on port <code>8000</code>, so we&#39;ll want to connect there.</p>
+<h2 id="first-run">First run</h2>
+<p>Great! So by now you should have 3 files in your project directory, <code>package.json</code>, <code>server.js</code> and <code>client.js</code>. You will also have a <code>node_modules</code> folder.</p>
+<p>Now, in one terminal, fire up the server with a:</p>
+<pre><code class="lang-bash">node server.js
+</code></pre>
+<p>And in another terminal window, fire up the client:</p>
+<pre><code class="lang-bash">node client.js
+</code></pre>
+<p>You should see the server spit out something like this:</p>
+<pre><code class="lang-bash">node server.js
+got connection!
+</code></pre>
+<p>Yes! We&#39;ve got a websocket connection from the client. Cool! Now we can start shuttling information back and forth!</p>
+<h2 id="back-to-the-server">Back to the Server</h2>
+<p>Open up <code>server.js</code> again, we&#39;re going to add a little bit more to the handler function!</p>
+<p>Your <code>server.js</code> file should now look like:</p>
+<pre><code class="lang-javascript">server.on(&#39;connection&#39;, function (connection) {
+
+    var id = conn.id;
+    var inStream = connection.inStream;
+    var outStream = connection.outStream;
+
+    inStream.on(&#39;addOne&#39;, function (data) {
+        server.emitTo(outStream, &#39;addedOne&#39;, data += 1);
+    });
+
+    server.emitTo(outStream, &#39;ready&#39;, id);
+});
+</code></pre>
+<h3 id="wait-what-s-going-on-here-">Wait, what&#39;s going on here?</h3>
+<p>When a connection is made, the callback is fired with the <code>connection</code> object as its argument. The <code>connection</code> object has three main properties:</p>
+<ul>
+<li><code>connection.id</code> a random string of letters and numbers</li>
+<li><code>connection.inStream</code> is an EventEmitter that we can listen to for events fired by the client</li>
+<li><code>connection.outStream</code> is a Stream we can emit events and data to!</li>
+</ul>
+<p>So here, all we&#39;re doing is adding a handler for when the client sends a &#39;addOne&#39; event with some data. Once we get that event we just add one to the data, and emit it back to the connection&#39;s <code>outStream</code>!</p>
+<p>After we&#39;ve set-up the listener, we&#39;re going to send a &#39;ready&#39; event to the client, with the connection id!</p>
+<p>Let&#39;s head back over to the Client-side and make something happen!</p>
+<h2 id="back-to-the-client">Back to the Client</h2>
+<p>Last we saw, all we were doing on our client was connecting to the server. Now that we&#39;ve got some listeners set up, let&#39;s have some fun!</p>
+<p>We know that the server is going to send us a &#39;ready&#39; event. Let&#39;s create a listener for that baddy. Add the following to your <code>client.js</code> script, just above the <code>client.connect()</code> line.</p>
+<pre><code class="lang-javascript">client.on(&#39;ready&#39;, function () {
+    client.emit(&#39;addOne&#39;, 1);
+});
+
+client.on(&#39;addedOne&#39;, function (data) {
+    console.log(&#39;got &quot;addedOne&quot; event from the server with data: &#39; + data);
+});
+</code></pre>
+<h4 id="so-what-s-happening-here-">So what&#39;s happening here?</h4>
+<p>We&#39;ve set up two listeners. When the client gets the <code>ready</code> event from the server, it will then emit an &#39;addOne&#39; event back to the server, with the integer <code>1</code> as the data payload. As you recall, in our server we take those events, add one to them, then emit a <code>addedOne</code> event back to the client. That&#39;s where our second listener comes in!</p>
+<p>When we get that <code>addedOne</code> event, let&#39;s just log it and see if we got back some data from the server!</p>
+<h2 id="let-s-run-it-again-">Let&#39;s run it again!</h2>
+<p>Open up two terminal windows again, and run the following in each:</p>
+<pre><code class="lang-bash">node server.js
+</code></pre>
+<pre><code class="lang-bash">node client.js
+</code></pre>
+<p>from the terminal you ran the client in, you should see the following:</p>
+<pre><code class="lang-bash">node client.js
+got &quot;addedOne&quot; event from the server with data: 2
+</code></pre>
+<p>Success! We&#39;ve got a working two-way websocket communication!</p>
+<p>Let&#39;s head over to the next section and bring this into the browser! Yeehaw!</p>
+
+        </div>
+    </div>
+
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.5/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</body>
+
+</html>
