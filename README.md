@@ -1,4 +1,11 @@
-# agora [![Build Status](https://magnum.travis-ci.com/alexander-daniel/agora.svg?token=5GnFxJg7qeJWRzj1HsZo&branch=master)](https://magnum.travis-ci.com/alexander-daniel/agora)
+# agora
+
+⚠️ This is a placeholder repository for the deprecated/unpublished `agora` npm package.  
+It exists only to support projects that reference it, so they don’t break with a “missing package” error.  
+
+Original docs (archived below) are included for reference.
+
+
 dead simple websocket communication module.
 
 Stream JSON data easily with events between clients and server. You can broadcast to all clients, or just one.
